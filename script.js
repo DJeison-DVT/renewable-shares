@@ -14,17 +14,63 @@ const projection = d3.geoMercator()
 let data = new Map();
 let csvData; // Variable to store the loaded CSV data
 const colorScale = d3.scaleThreshold()
-    .domain([0, 5, 10, 15, 20, 25, 30])
-    .range(d3.schemeBuGn[7]);
+    .domain([0, 10, 20, 30, 40, 50, 60, 70])
+    .range(d3.schemeBuGn[8]);
 
 // Create a tooltip
 const tooltip = d3.select("body")
     .append("div")
     .attr("class", "tooltip");
 
+
 // Slider setup
 const slider = d3.select("#yearSlider");
 const selectedYearLabel = d3.select("#selectedYear");
+
+let isPlaying = false;
+let intervalId;
+
+// Get the Play/Pause button and slider elements
+const playPauseButton = d3.select("#playPauseButton");
+const sliderElement = document.getElementById("yearSlider");
+
+// Update the button text based on play/pause state
+playPauseButton.on("click", function () {
+    const maxYear = +slider.property("max");
+    const minYear = +slider.property("min");
+    let currentValue = +slider.property("value");
+
+    if (isPlaying) {
+        clearInterval(intervalId);
+        playPauseButton.text("Play");
+        sliderElement.disabled = false;
+    } else {
+        // If slider is at max value (2023), reset it to the start year (1965)
+        if (currentValue === maxYear) {
+            slider.property("value", minYear).dispatch("input");
+        }
+
+        playPauseButton.text("Pause");
+        sliderElement.disabled = true;
+
+        // Start an interval to automatically move the slider
+        intervalId = setInterval(() => {
+            currentValue = +slider.property("value");
+
+            if (currentValue < maxYear) {
+                slider.property("value", currentValue + 1).dispatch("input");
+            } else {
+                clearInterval(intervalId);
+                playPauseButton.text("Play");
+                sliderElement.disabled = false;
+                isPlaying = false;
+            }
+        }, 1000); // Interval duration 
+    }
+
+    isPlaying = !isPlaying; // Toggle the play/pause state
+});
+
 
 // Update the selected year label
 slider.on("input", function () {
@@ -41,12 +87,13 @@ function updateMap(selectedYear) {
         }
     });
 
+
     svg.selectAll("path")
         .transition()
         .duration(300)
         .attr("fill", function (d) {
             d.total = data.get(d.id) || 0;
-            return d.total === 0 ? "#f0f0f0" : colorScale(d.total);
+            return d.total === 0 ? "url(#diagonalHatch)" : colorScale(d.total);
         });
 }
 
