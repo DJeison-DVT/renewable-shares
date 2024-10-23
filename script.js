@@ -12,9 +12,10 @@ const projection = d3.geoMercator()
 
 // Data and color scale
 let data = new Map();
+let csvData; // Variable to store the loaded CSV data
 const colorScale = d3.scaleThreshold()
     .domain([0, 5, 10, 15, 20, 25, 30])
-    .range(d3.schemeBlues[7]);
+    .range(d3.schemeBuGn[7]);
 
 // Create a tooltip
 const tooltip = d3.select("body")
@@ -32,36 +33,44 @@ slider.on("input", function () {
 });
 
 function updateMap(selectedYear) {
-    d3.csv("renewable-share-energy.csv", function (d) {
+    data.clear();
+
+    csvData.forEach(d => {
         if (d.Year === selectedYear) {
             data.set(d.Code, +d["Renewables (% equivalent primary energy)"]);
         }
-    }).then(function () {
-        svg.selectAll("path")
-            .transition()
-            .duration(300)
-            .attr("fill", function (d) {
-                d.total = data.get(d.id) || 0;
-                return colorScale(d.total);
-            });
     });
+
+    svg.selectAll("path")
+        .transition()
+        .duration(300)
+        .attr("fill", function (d) {
+            d.total = data.get(d.id) || 0;
+            return d.total === 0 ? "#f0f0f0" : colorScale(d.total);
+        });
 }
 
-
-// Load GeoJSON data and initially set up the map
+// Load GeoJSON data and CSV data once and set up the map
 let topo;
 Promise.all([
     d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson"),
     d3.csv("renewable-share-energy.csv")
 ]).then(function (loadData) {
     topo = loadData[0];
+    csvData = loadData[1]; // Store the CSV data for later use
+
+    // Draw the initial map
     svg.append("g")
         .selectAll("path")
         .data(topo.features)
         .join("path")
         // draw each country
         .attr("d", d3.geoPath().projection(projection))
-
+        // Set initial color
+        .attr("fill", function (d) {
+            d.total = data.get(d.id) || 0;
+            return colorScale(d.total);
+        })
         // Add events for tooltip
         .on("mouseover", function (event, d) {
             tooltip.transition().duration(200).style("opacity", 1);
@@ -77,14 +86,7 @@ Promise.all([
         .on("mouseout", function () {
             tooltip.transition().duration(200).style("opacity", 0);
             d3.select(this).style("stroke", "none");
-        })
-        .transition()
-        // set the color of each country
-        .attr("fill", function (d) {
-            d.total = data.get(d.id) || 0;
-            return colorScale(d.total);
-        })
+        });
 
     updateMap(slider.property("value"));
-
 });
