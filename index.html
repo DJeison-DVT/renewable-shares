@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>World Choropleth Map</title>
+    <!-- Load D3.js -->
+    <script src="https://d3js.org/d3.v6.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Slider for selecting the year -->
+    <div>
+        <input type="range" min="1965" max="2023" value="2023" step="1" id="yearSlider">
+        <label for="yearSlider">Year: <span id="selectedYear">2023</span></label>
+    </div>
+
+    <!-- Create an element where the map will take place -->
+    <svg id="my_dataviz" width="800" height="500"></svg>
+
+    <!-- Include your script file here or paste the JavaScript code below -->
+    <script src="script.js"></script>
+</body>
+
+
+</html>
